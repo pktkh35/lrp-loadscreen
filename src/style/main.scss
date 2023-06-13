@@ -6,11 +6,33 @@ $main: #f3ca20;
 $success: #5af52b;
 $error: #cc3b3b;
 
+@font-face {
+    font-family: "PFDinDisplayPro";
+    font-style: normal;
+    font-weight: 400;
+    src: url("fonts/PFDinDisplayPro-Regular.woff") format("woff");
+}
+
+@font-face {
+    font-family: "PFDinDisplayPro";
+    font-style: normal;
+    font-weight: 300;
+    src: url("fonts/PFDinDisplayPro-Bold.woff") format("woff");
+}
+
+@font-face {
+    font-family: "signatures";
+    font-style: normal;
+    font-weight: normal;
+    src: url("fonts/signatures.ttf");
+}
+
 * {
     margin: 0;
     padding: 0;
-    font-family: "Noto Sans Thai", sans-serif;
+    font-family: "PFDinDisplayPro", "Noto Sans Thai", sans-serif;
     color: white;
+    font-weight: 300;
     user-select: none;
 }
 
@@ -22,6 +44,48 @@ $error: #cc3b3b;
     height: 100vh;
     background-color: $background;
 
+    .logo-server {
+        position: absolute;
+        top: 1vmin;
+        right: 1vmin;
+        width: 6vmin;
+        height: 6vmin;
+        background-color: rgb(15, 15, 15);
+        background-image: url("img/logo.png");
+        background-size: 80%;
+        background-repeat: no-repeat;
+        background-position: center;
+        animation: crossfade 20s forwards;
+        z-index: 999;
+        transition: 0.2s;
+        border-radius: .8vmin;
+
+        &.hide {
+            opacity: 0;
+        }
+    }
+
+    .logo-developer {
+        position: absolute;
+        top: 1vmin;
+        right: 8vmin;
+        width: 6vmin;
+        height: 6vmin;
+        background-color: rgb(15, 15, 15);
+        background-image: url("https://www.athens-groups.com/img/logo_bg.png");
+        background-size: 80%;
+        background-repeat: no-repeat;
+        background-position: center;
+        animation: crossfade 20s forwards;
+        z-index: 999;
+        transition: 0.2s;
+        border-radius: .8vmin;
+
+        &.hide {
+            opacity: 0;
+        }
+    }
+
     .menu-container {
         position: absolute;
         top: 0;
@@ -30,6 +94,14 @@ $error: #cc3b3b;
         width: 50vmin;
         height: 5vmin;
         z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: 0.3s;
+
+        &.show {
+            opacity: 1;
+            visibility: visible;
+        }
 
         .content {
             position: absolute;
@@ -50,7 +122,7 @@ $error: #cc3b3b;
                 top: 0;
                 height: 100%;
                 width: 100%;
-                background-color: lighten($background, 10%);
+                background-color: lighten($background, 2%);
                 z-index: -1;
                 clip-path: polygon(2.2vmin 0%, calc(100% - 2.2vmin) 0%, 100% 100%, 0% 100%);
                 rotate: 180deg;
@@ -113,15 +185,23 @@ $error: #cc3b3b;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to top, $background, transparent 40%, transparent 60%, $background);
+            background: linear-gradient(
+                to top,
+                darken($background, 5%),
+                transparent 40%,
+                transparent 60%,
+                darken($background, 5%)
+            );
+            z-index: 13;
         }
 
-        iframe {
+        * {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            z-index: 1;
         }
     }
 
@@ -133,14 +213,315 @@ $error: #cc3b3b;
         height: 1.2vmin;
         background-color: #161616;
         overflow: hidden;
+        z-index: 99;
 
         .bar {
             position: absolute;
             left: 0;
-            width: 10%;
+            width: 0%;
             height: 100%;
             background-color: rgb(243, 202, 32);
             box-shadow: 0 0 2vmin rgb(243, 202, 32);
         }
+    }
+
+    .play-button {
+        position: absolute;
+        left: 50%;
+        bottom: 10vmin;
+        translate: -50% 0;
+        padding: 0.5vmin 3vmin;
+        z-index: 90;
+        border-radius: 2.2vmin;
+        font-size: 2vmin;
+        transition: 0.3s;
+
+        &.ready {
+            cursor: pointer;
+            background-color: $main;
+            color: $background;
+        }
+
+        &:not(.ready) {
+            background-color: $background;
+            color: white;
+            scale: 0.9;
+            opacity: 0;
+        }
+    }
+}
+
+.menu-ontop {
+    position: absolute;
+    top: -100%;
+    left: 0%;
+    width: 100vw;
+    height: 100vh;
+    background-color: $background;
+    z-index: 999;
+    transition: 2s;
+    
+    &.show {
+        top: 0%;
+    }
+
+    .logo-server {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        translate: -50% -50%;
+        width: 40vmin;
+        height: 40vmin;
+        background-image: url("img/logo.png");
+        background-size: cover;
+        z-index: 999;
+        transition: 3s ease-in-out;
+        opacity: 0;
+    }
+
+    .register-menu {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        translate: -50% -50%;
+        width: 90vmin;
+        height: 50vmin;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: .5s;
+
+        &.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .title {
+            position: absolute;
+            left: 50%;
+            background-color: lighten($background, 5%);
+            padding: 0 3vmin;
+            height: 5vmin;
+            font-size: 1.8vmin;
+            border-radius: 20vmin;
+            translate: -50% 0;
+            white-space: nowrap;
+            top: -2.5vmin;
+            z-index: 99;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .left-side {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 45vmin;
+            height: 100%;
+            background-color: lighten($background, 2%);
+            border-radius: 2.2vmin;
+            box-sizing: border-box;
+            padding: 2vmin;
+            padding-top: 4vmin;
+
+            .bottom {
+                display: flex;
+                width: 100%;
+                gap: 2vmin;
+
+                button {
+                    flex: 1;
+                }
+            }
+        }
+
+        .id-card {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            translate: 0 -50%;
+            width: 43vmin;
+            height: 25vmin;
+            background: linear-gradient(to top left, mix(darken($main, 20%), $background, 60%), mix($main, $background, 60%));
+            border-radius: 2.2vmin;
+            box-shadow: 0 0 5vmin $main;
+
+            .logo-background {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                translate: -50% -50%;
+                background-image: url("img/logo.png");
+                background-size: cover;
+                width: 20vmin;
+                height: 20vmin;
+                opacity: .1;
+            }
+
+            .card-title {
+                position: absolute;
+                left: 0;
+                top: 1.9vmin;
+                height: 3vmin;
+                width: 100%;
+                background-color: $background;
+                display: flex;
+                align-items: center;
+                box-sizing: border-box;
+                padding: 0 2vmin;
+                font-size: 1.2vmin;
+                z-index: 1;
+            }
+
+            .card-name {
+                position: absolute;
+                top: 5vmin;
+                width: 100%;
+                height: 3vmin;
+                display: flex;
+                align-items: center;
+                box-sizing: border-box;
+                padding: 0 2vmin;
+                z-index: 1;
+
+                .header {
+                    font-size: 1.2vmin;
+                    margin-right: 1vmin;
+                }
+
+                .value {
+                    position: absolute;
+                    left: 9vmin;
+                    font-size: 1.6vmin;
+                    margin-bottom: .25vmin;
+                    text-transform: uppercase;
+                }
+            }
+
+            .card-dob {
+                position: absolute;
+                top: 8vmin;
+                width: 100%;
+                height: 3vmin;
+                display: flex;
+                align-items: center;
+                box-sizing: border-box;
+                padding: 0 2vmin;
+                z-index: 1;
+
+                .header {
+                    font-size: 1.2vmin;
+                    margin-right: 1vmin;
+                }
+
+                .value {
+                    position: absolute;
+                    left: 9vmin;
+                    font-size: 1.6vmin;
+                    margin-bottom: .25vmin;
+                    text-transform: uppercase;
+                }
+            }
+
+            .card-height {
+                position: absolute;
+                top: 11vmin;
+                width: 100%;
+                height: 3vmin;
+                display: flex;
+                align-items: center;
+                box-sizing: border-box;
+                padding: 0 2vmin;
+                z-index: 1;
+
+                .header {
+                    font-size: 1.2vmin;
+                    margin-right: 1vmin;
+                }
+
+                .value {
+                    position: absolute;
+                    left: 9vmin;
+                    font-size: 1.6vmin;
+                    margin-bottom: .25vmin;
+                    text-transform: uppercase;
+                }
+            }
+
+            .card-gender {
+                position: absolute;
+                top: 14vmin;
+                width: 100%;
+                height: 3vmin;
+                display: flex;
+                align-items: center;
+                box-sizing: border-box;
+                padding: 0 2vmin;
+                z-index: 1;
+
+                .header {
+                    font-size: 1.2vmin;
+                    margin-right: 1vmin;
+                }
+
+                .value {
+                    position: absolute;
+                    left: 9vmin;
+                    font-size: 1.6vmin;
+                    margin-bottom: .25vmin;
+                    text-transform: uppercase;
+                }
+            }
+
+
+            .card-image {
+                position: absolute;
+                right: 1vmin;
+                bottom: 1vmin;
+                width: 8vmin;
+                height: 8vmin;
+                background-color: $background;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3vmin;
+                border-radius: .8vmin;
+                border-bottom-right-radius: 2.2vmin;
+            }
+
+            .card-signature {
+                position: absolute;
+                right: 10vmin;
+                bottom: 1vmin;
+                border-bottom: .2vmin solid rgb(255,255,255);
+                padding: 0 2vmin;
+
+                * {
+                    font-family: "signatures";
+                    font-size: 4vmin;
+                }
+            }
+        }
+    }
+}
+
+@keyframes crossfade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.form-group {
+    position: relative;
+    width: 100%;
+    display: flex;
+    gap: 2vmin;
+
+    > div {
+        flex: 1;
     }
 }
