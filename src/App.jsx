@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react'
 import ReactPlayer from 'react-player'
-
 import { Button, ConfigProvider, DatePicker, Form, Input, InputNumber, Radio, Space } from "antd"
 import moment from 'moment/moment'
+import axios from 'axios'
 
 const musicList = [
     'https://www.youtube.com/watch?v=MWvRNqJ16Gs',
     'https://www.youtube.com/watch?v=-g639NhOACk',
     'https://www.youtube.com/watch?v=D1JCO_syWWc',
-    'https://www.youtube.com/watch?v=gm8uqPseA9E'
+    'https://www.youtube.com/watch?v=gm8uqPseA9E',
+    'https://www.youtube.com/watch?v=q5nNqnd0uBo'
 ]
 
 const App = () => {
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const [ref, setRef] = useState()
+    const [form] = Form.useForm();
+
     const [volume, setvolume] = useState(0);
     const [musicPlaying, setMusicPlaying] = useState(true);
     const rand = (min, max) => {
@@ -19,14 +24,19 @@ const App = () => {
     }
 
     const [musicUrl, setMusicUrl] = useState(musicList[rand(0, musicList.length)])
-
     const [formData, setFormData] = useState({});
+
+    const [opacityRegister, setOpacityRegister] = useState(0);
+    const [registerShow, setRegisterShow] = useState(false);
+    const [menuShow, setMenuShow] = useState(false);
+
+    const [playShow, setPlayShow] = useState(false);
+    const [hasIdentity, SethasIdentity] = useState(false);
 
     useEffect(() => {
         var types = [
             "INIT_CORE",
             "INIT_BEFORE_MAP_LOADED",
-            "MAP",
             "INIT_AFTER_MAP_LOADED",
             "INIT_SESSION"
         ];
@@ -76,11 +86,18 @@ const App = () => {
             performMapLoadFunction(data) {
                 //Increment the map done accumulator.
                 states["MAP"].done++;
-            }
+            },
 
+            playerLoaded(data) {
+                setPlayShow(true);
+                SethasIdentity(data.hasIdentity)
+            }
         };
 
         window.addEventListener('message', function (e) {
+            if (e.data.eventName) {
+                console.log(e.data);
+            }
             (handlers[e.data.eventName] || function () { })(e.data);
         });
 
@@ -94,26 +111,6 @@ const App = () => {
             return 0;
         }
 
-        //Get the total progress for all the types.
-        function GetTotalProgress() {
-            var totalProgress = 0;
-            var totalStates = 0;
-
-            for (var i = 0; i < types.length; i++) {
-                var key = types[i];
-                if (config.progressBars[key].enabled) {
-                    totalProgress += GetTypeProgress(key);
-                    totalStates++;
-                }
-            }
-
-            //Dont want to divide by zero because it will return NaN.
-            //Be nice and return a zero for us.
-            if (totalProgress == 0) return 0;
-
-            return totalProgress / totalStates;
-        }
-
         //Cache to keep track of all progress values.
         //This is need for the Math.max functions (so no backwards progressbars).
         function Init() {
@@ -123,10 +120,28 @@ const App = () => {
             setInterval(UpdateSingle, 250);
         }
 
+        //Get the total progress for all the types.
+        function GetTotalProgress() {
+            var totalProgress = 0;
+            var totalStates = 0;
+
+            for (var i = 0; i < types.length; i++) {
+                var key = types[i];
+                totalProgress += GetTypeProgress(key);
+                totalStates++;
+            }
+
+            //Dont want to divide by zero because it will return NaN.
+            //Be nice and return a zero for us.
+            if (totalProgress == 0) return 0;
+
+            return totalProgress / totalStates;
+        }
+
         //Update the single progressbar.
         function UpdateSingle() {
             var progressBar = document.getElementById("progressbar");
-            progressBar.value = progressCache[10];
+            progressBar.style.width = GetTotalProgress() + "%";
 
         }
 
@@ -139,10 +154,87 @@ const App = () => {
         Init()
     }, [])
 
-    return <>
+    const [modalData, SetModalData] = useState({});
+    const [modalShow, setModalShow] = useState(false);
+    const [isBusy, setIsBusy] = useState(false);
+    const [busyTimeout, setBusyTimeout] = useState();
+    const disableFor = ms => {
+        if (busyTimeout) {
+            clearTimeout(busyTimeout);
+        }
+        setIsBusy(true);
+        setBusyTimeout(setTimeout(() => {
+            setIsBusy(false);
+        }, ms))
+    }
 
+    const showModal = (title = "System", message = "") => {
+        if (busyTimeout) {
+            clearTimeout(busyTimeout);
+        }
+        SetModalData({
+            title,
+            message
+        })
+        setBusyTimeout(setTimeout(() => {
+            setModalShow(true);
+        }, 10));
+    }
+
+    // Register form
+    const onSubmit = async (values) => {
+        if (values.firstname === undefined || values.firstname === "") {
+            return showModal("Firstname Missing", "กรุณากรอกชื่อจริงของคุณ");
+        }
+
+        if (values.firstname.charAt(0) !== values.firstname.charAt(0).toUpperCase()) {
+            return showModal("Firstname Error", "ชื่อจริงจำเป็นต้องขึ้นต้นด้วยตัวพิมพ์ใหญ่");
+        }
+
+        if (values.lastname === undefined || values.lastname === "") {
+            return showModal("Lastname Missing", "กรุณากรอกนาสกุลของคุณ");
+        }
+
+        if (values.lastname.charAt(0) !== values.lastname.charAt(0).toUpperCase()) {
+            return showModal("Lastname Error", "นามสกุลจำเป็นต้องขึ้นต้นด้วยตัวพิมพ์ใหญ่");
+        }
+
+        if (values.height === undefined || values.height === "") {
+            return showModal("Height Missing", "กรุณากรอกส่วนสูงของคุณ");
+        }
+
+        if (values.height < 110) {
+            return showModal("Height Error", "ส่วนสูงควรไม่ต่ำกว่า 110 เซนติเมตร");
+        }
+
+        if (values.dob === undefined || values.dob === "") {
+            return showModal("Date of Birth Missing", "กรุณาเลือกวันเกิดของคุณ");
+        }
+
+        if (values.gender === undefined || values.gender === "") {
+            return showModal("Gender Missing", "กรุณาเลือกเพศของคุณ");
+        }
+
+        if (values.gender === "more" && values['more-gender'] === undefined || values['more-gender'] === "") {
+            return showModal("Gender Missing", "กรุณาระบุเพศของคุณ");
+        }
+
+        setRegisterShow(false);
+        await wait(800);
+        setOpacityRegister(1);
+        await wait(3000);
+
+        console.log(values)
+        axios.post("https://lok-loadscreen/register", JSON.stringify({
+            ...values,
+            dob: moment(values.dob.$d).format("D/MM/YYYY")
+        }))
+    }
+
+    return <>
         <div className="main-screen">
             <ReactPlayer
+                ref={refs => setRef(refs)}
                 volume={volume}
                 url={musicUrl}
                 width={0}
@@ -159,14 +251,17 @@ const App = () => {
                 style={{
                     zIndex: 999999
                 }}
-                onEnded={() => setMusicUrl(musicList[rand(0, musicList.length)])}
+                onEnded={() => {
+                    setMusicUrl(musicList[rand(0, musicList.length)])
+                    ref.seekTo(0, "seconds")
+                }}
             />
             <div className="menu-container show">
                 <div className="content">
                     <div className="menu">
                         HOME
                     </div>
-                    <a className="menu" href="https://bit.ly/3oRA27u" target='_blank' onClick={() => window.invokeNative("https://bit.ly/3oRA27u")}>
+                    <a className="menu" href="https://bit.ly/3oRA27u" target='_blank' onClick={() => window.invokeNative('openUrl', "https://bit.ly/3oRA27u")}>
                         RULES
                     </a>
                     <div className="header">
@@ -175,14 +270,14 @@ const App = () => {
                     <div className="menu">
                         NEW PLAYER
                     </div>
-                    <a className="menu" href="https://bit.ly/3oRA27u" target='_blank' onClick={() => window.invokeNative("https://bit.ly/3oRA27u")}>
+                    <a className="menu" href="https://bit.ly/3oRA27u" target='_blank' onClick={() => window.invokeNative('openUrl', "https://bit.ly/3oRA27u")}>
                         DISCORD
                     </a>
                 </div>
             </div>
             <ReactPlayer
                 volume={0}
-                url='https://www.youtube.com/watch?v=sauDhxaQuJ8'
+                url='https://www.youtube.com/watch?v=IaGe-Wc7ahQ'
                 className="sc-background"
                 width="100%"
                 height="100%"
@@ -201,21 +296,36 @@ const App = () => {
                 <div className="bar" id="progressbar"></div>
             </div>
 
-            <div className="play-button">
+            <div className={"play-button" + (playShow ? " ready" : "")} onClick={async () => {
+                if (!hasIdentity) {
+                    setOpacityRegister(0);
+                    setMenuShow(true);
+                    await wait(2000);
+                    setRegisterShow(true);
+                } else {
+                    setOpacityRegister(0);
+                    setMenuShow(true);
+                    await wait(2000);
+                    setOpacityRegister(1);
+                    await wait(3000);
+                    axios.post("https://lok-loadscreen/pressPlay")
+                }
+            }}>
                 PLAY
             </div>
         </div>
 
-        <div className="menu-ontop">
+        <div className={"menu-ontop" + (menuShow ? " show" : "")}>
             <div className="logo-server" style={{
-                opacity: "0"
+                opacity: opacityRegister
             }}></div>
-            <div className="register-menu show">
+            <div className={"register-menu" + (registerShow ? " show" : "")}>
                 <div className="left-side">
                     <div className="title">
                         แบบฟอร์ม ข้อมูลบัตรประชาชน
                     </div>
                     <Form
+                        form={form}
                         layout='vertical'
                         onValuesChange={value => setFormData(prev => {
                             return {
@@ -223,6 +333,7 @@ const App = () => {
                                 ...value,
                             }
                         })}
+                        onFinish={onSubmit}
                     >
                         <div className='form-group'>
                             <Form.Item label="ชื่อจริง" name="firstname">
@@ -311,11 +422,44 @@ const App = () => {
                     </div>
                     <div className="card-signature">
                         <div className="value">
-                            {formData.firstname !== "" && formData.firstname || "Unknow"}
+                            {formData.firstname !== "" && formData.firstname || "Unknow"}&nbsp;{formData.lastname !== "" && formData.lastname || "Unknow"}
                         </div>
                     </div>
                     <div className="card-image">
                         <i class="fa-solid fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div className={"modal" + (modalShow ? " show" : "")}>
+            <div className="modal-background" onClick={() => {
+                if (busyTimeout) {
+                    clearTimeout(busyTimeout)
+                }
+                setModalShow(false)
+                setBusyTimeout(setTimeout(() => {
+                    SetModalData({})
+                }, 400))
+            }} />
+            <div className="modal-container">
+                <div className="modal-title">
+                    {modalData.title || ""}
+                </div>
+                <div className="modal-subtitle">
+                    {modalData.message || ""}
+                </div>
+                <div className="modal-action">
+                    <div className="modal-btn" onClick={() => {
+                        if (busyTimeout) {
+                            clearTimeout(busyTimeout)
+                        }
+                        setModalShow(false)
+                        setBusyTimeout(setTimeout(() => {
+                            SetModalData({})
+                        }, 400))
+                    }}>
+                        ตกลง
                     </div>
                 </div>
             </div>

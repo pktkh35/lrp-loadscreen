@@ -30,7 +30,7 @@ $error: #cc3b3b;
 * {
     margin: 0;
     padding: 0;
-    font-family: "PFDinDisplayPro", "Noto Sans Thai", sans-serif;
+    font-family: "Noto Sans Thai", sans-serif;
     color: white;
     font-weight: 300;
     user-select: none;
@@ -155,6 +155,7 @@ $error: #cc3b3b;
                 height: 4vmin;
                 white-space: nowrap;
                 text-decoration: none;
+                font-size: 1.6vmin;
 
                 i {
                     position: absolute;
@@ -222,6 +223,7 @@ $error: #cc3b3b;
             height: 100%;
             background-color: rgb(243, 202, 32);
             box-shadow: 0 0 2vmin rgb(243, 202, 32);
+            transition: .3s;
         }
     }
 
@@ -315,8 +317,10 @@ $error: #cc3b3b;
 
         .left-side {
             position: absolute;
-            left: 0;
+            left: -10vmin;
             top: 0;
+            opacity: 0;
+            transition: .8s;
             width: 45vmin;
             height: 100%;
             background-color: lighten($background, 2%);
@@ -338,7 +342,8 @@ $error: #cc3b3b;
 
         .id-card {
             position: absolute;
-            right: 0;
+            right: -10vmin;
+            opacity: 0;
             top: 50%;
             translate: 0 -50%;
             width: 43vmin;
@@ -346,6 +351,7 @@ $error: #cc3b3b;
             background: linear-gradient(to top left, mix(darken($main, 20%), $background, 60%), mix($main, $background, 60%));
             border-radius: 2.2vmin;
             box-shadow: 0 0 5vmin $main;
+            transition: .8s;
 
             .logo-background {
                 position: absolute;
@@ -391,6 +397,7 @@ $error: #cc3b3b;
                 }
 
                 .value {
+                    font-family: "PFDinDisplayPro";
                     position: absolute;
                     left: 9vmin;
                     font-size: 1.6vmin;
@@ -416,6 +423,7 @@ $error: #cc3b3b;
                 }
 
                 .value {
+                    font-family: "PFDinDisplayPro";
                     position: absolute;
                     left: 9vmin;
                     font-size: 1.6vmin;
@@ -441,6 +449,7 @@ $error: #cc3b3b;
                 }
 
                 .value {
+                    font-family: "PFDinDisplayPro";
                     position: absolute;
                     left: 9vmin;
                     font-size: 1.6vmin;
@@ -466,6 +475,7 @@ $error: #cc3b3b;
                 }
 
                 .value {
+                    font-family: "PFDinDisplayPro";
                     position: absolute;
                     left: 9vmin;
                     font-size: 1.6vmin;
@@ -503,6 +513,18 @@ $error: #cc3b3b;
                 }
             }
         }
+
+        &.show {
+            .left-side {
+                opacity: 1;
+                left: 0;
+            }
+
+            .id-card {
+                right: 0;
+                opacity: 1;
+            }
+        }
     }
 }
 
@@ -523,5 +545,98 @@ $error: #cc3b3b;
 
     > div {
         flex: 1;
+    }
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+    visibility: hidden;
+    transition: .3s;
+    opacity: 0;
+
+    &.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-background {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgb(darken($background, 5%), .9);
+    }
+
+    .modal-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        translate: -50% -50%;
+        min-width: 40vmin;
+        min-height: 18vmin;
+        background-color: lighten($background, 5%);
+        border-radius: 2.2vmin;
+        box-sizing: border-box;
+        padding: 3vmin;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding-bottom: 8vmin;
+        scale: 1.1;
+        transition: .4s;
+
+        .modal-title {
+            font-size: 2vmin;
+            font-weight: bold;
+        }
+
+        .modal-subtitle {
+            font-size: 1.6vmin;
+            opacity: .3;
+            font-weight: 300;
+        }
+
+        .modal-action {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5vmin;
+            border-top: .2vmin solid rgb(darken($background, 5%), 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom-left-radius: 2.2vmin;
+            border-bottom-right-radius: 2.2vmin;
+
+            .modal-btn {
+                cursor: pointer;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: .2s;
+                font-size: 1.4vmin;
+
+                &:hover {
+                    background-color: $background;
+                }
+            }
+        }
+    }
+
+    &.show {
+        .modal-container {
+            scale: 1;
+        }
     }
 }
