@@ -35,14 +35,35 @@ const App = () => {
 
     useEffect(() => {
         var types = [
-            "INIT_CORE",
+            // "INIT_CORE",
             "INIT_BEFORE_MAP_LOADED",
+            "MAP",
             "INIT_AFTER_MAP_LOADED",
             "INIT_SESSION"
         ];
         var stateCount = 4;
         var states = {};
-        var progressCache = [];
+        var progressBars = {
+            "INIT_CORE": {
+                enabled: false, //NOTE: Disabled because INIT_CORE seems to not get called properly. (race condition).
+            },
+
+            "INIT_BEFORE_MAP_LOADED": {
+                enabled: true,
+            },
+
+            "MAP": {
+                enabled: true,
+            },
+
+            "INIT_AFTER_MAP_LOADED": {
+                enabled: true,
+            },
+
+            "INIT_SESSION": {
+                enabled: true,
+            }
+        }
 
         const handlers = {
             startInitFunction(data) {
@@ -51,7 +72,6 @@ const App = () => {
                     states[data.type] = {};
                     states[data.type].count = 0;
                     states[data.type].done = 0;
-
 
                     //NOTE: We increment the stateCount if we do receive the INIT_CORE.
                     //      Because INIT_CORE is the first type, it will not always be invoked due to a race condidition.
@@ -95,11 +115,23 @@ const App = () => {
         };
 
         window.addEventListener('message', function (e) {
-            if (e.data.eventName) {
-                console.log(e.data);
-            }
             (handlers[e.data.eventName] || function () { })(e.data);
         });
+
+        var progressCache = 0;
+        //Cache to keep track of all progress values.
+        //This is need for the Math.max functions (so no backwards progressbars).
+        function Init() {
+            setInterval(UpdateSingle, 250);
+        }
+
+        function UpdateSingle() {
+            UpdateTotalProgress();
+
+            var progressBar = document.getElementById("progressbar");
+            progressBar.style.width = progressCache + "%";
+
+        }
 
         //Get the progress of a specific type. (See types array).
         function GetTypeProgress(type) {
@@ -111,15 +143,6 @@ const App = () => {
             return 0;
         }
 
-        //Cache to keep track of all progress values.
-        //This is need for the Math.max functions (so no backwards progressbars).
-        function Init() {
-            var progressBar = document.getElementById("progressbar");
-            progressBar.classList.remove("hide");
-
-            setInterval(UpdateSingle, 250);
-        }
-
         //Get the total progress for all the types.
         function GetTotalProgress() {
             var totalProgress = 0;
@@ -127,8 +150,10 @@ const App = () => {
 
             for (var i = 0; i < types.length; i++) {
                 var key = types[i];
-                totalProgress += GetTypeProgress(key);
-                totalStates++;
+                if (progressBars[key].enabled) {
+                    totalProgress += GetTypeProgress(key);
+                    totalStates++;
+                }
             }
 
             //Dont want to divide by zero because it will return NaN.
@@ -138,17 +163,20 @@ const App = () => {
             return totalProgress / totalStates;
         }
 
-        //Update the single progressbar.
-        function UpdateSingle() {
-            var progressBar = document.getElementById("progressbar");
-            progressBar.style.width = GetTotalProgress() + "%";
-
-        }
-
         document.onkeydown = key => {
             if ([32].includes(key.which)) {
                 setMusicPlaying(prev => !prev);
             }
+        }
+
+        function UpdateTotalProgress() {
+            //Set the total progress counter:
+            var total = GetTotalProgress();
+            if (progressCache != null) {
+                total = Math.max(total, progressCache);
+            }
+
+            progressCache = total;
         }
 
         Init()
@@ -224,8 +252,7 @@ const App = () => {
         setOpacityRegister(1);
         await wait(3000);
 
-        console.log(values)
-        axios.post("https://lok-loadscreen/register", JSON.stringify({
+        axios.post("https://athens-loadscreen/register", JSON.stringify({
             ...values,
             dob: moment(values.dob.$d).format("D/MM/YYYY")
         }))
@@ -308,7 +335,7 @@ const App = () => {
                     await wait(2000);
                     setOpacityRegister(1);
                     await wait(3000);
-                    axios.post("https://lok-loadscreen/pressPlay")
+                    axios.post("https://athens-loadscreen/pressPlay")
                 }
             }}>
                 PLAY
