@@ -41,8 +41,8 @@ const Progressbar = () => {
             },
 
             initFunctionInvoking(data) {
-                document.querySelector('.bar').style.left = '0%';
-                document.querySelector('.bar').style.width = ((data.idx / window.progressCache) * 100) + '%';
+                document.querySelector('.progressbar .bar').style.left = '0%';
+                document.querySelector('.progressbar .bar').style.width = ((data.idx / window.progressCache) * 100) + '%';
             },
 
             startDataFileEntries(data) {
@@ -52,8 +52,8 @@ const Progressbar = () => {
             performMapLoadFunction(data) {
                 ++window.progressthisCount;
 
-                document.querySelector('.bar').style.left = '0%';
-                document.querySelector('.bar').style.width = ((window.progressthisCount / window.progressCache) * 100) + '%';
+                document.querySelector('.progressbar .bar').style.left = '0%';
+                document.querySelector('.progressbar .bar').style.width = ((window.progressthisCount / window.progressCache) * 100) + '%';
             },
         };
 

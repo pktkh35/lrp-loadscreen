@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import ReactPlayer from 'react-player'
-import { Button, ConfigProvider, DatePicker, Form, Input, InputNumber, Radio, Space } from "antd"
+import { Button, ConfigProvider, DatePicker, Form, Input, InputNumber, Radio, Slider, Space } from "antd"
 import moment from 'moment/moment'
 import axios from 'axios'
 import { createClient, get } from '@vercel/edge-config';
@@ -25,6 +25,7 @@ const App = () => {
         return min + Math.floor(Math.random() * max);
     }
 
+    const [oldMusic, setOldMusic] = useState("");
     const [musicUrl, setMusicUrl] = useState(musicList[rand(0, musicList.length)])
     const [formData, setFormData] = useState({});
 
@@ -40,6 +41,9 @@ const App = () => {
     const [modalShow, setModalShow] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
     const [busyTimeout, setBusyTimeout] = useState();
+    const [currentTime, setcurrentTime] = useState(0);
+    const [currentDuration, setcurrentDuration] = useState(0);
+
     const disableFor = ms => {
         if (busyTimeout) {
             clearTimeout(busyTimeout);
@@ -123,9 +127,36 @@ const App = () => {
         }
 
         window.addEventListener("message", onMessage)
+        const updateInfo = setInterval(() => {
+            const player = ref;
+            setcurrentTime(player.getCurrentTime())
+            setcurrentDuration(player.getDuration())
+        }, 1000);
 
-        return () => window.removeEventListener("message", onMessage)
+        return () => {
+            window.removeEventListener("message", onMessage)
+            clearInterval(updateInfo)
+        }
     })
+
+    const fancyTimeFormat = (duration) => {
+        // Hours, minutes and seconds
+        const hrs = ~~(duration / 3600);
+        const mins = ~~((duration % 3600) / 60);
+        const secs = ~~duration % 60;
+
+        // Output like "1:01" or "4:03:59" or "123:03:59"
+        let ret = "";
+
+        if (hrs > 0) {
+            ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+        }
+
+        ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+        ret += "" + secs;
+
+        return ret;
+    }
 
     return <>
         <div className="main-screen">
@@ -152,6 +183,45 @@ const App = () => {
                     ref.seekTo(0, "seconds")
                 }}
             />
+            <div className="music-info-controller">
+                <div className="timestamp-bar">
+                    <div className="box">
+                        <div className="bar" style={{
+                            width: `${(currentTime / currentDuration) * 100}%`
+                        }}></div>
+                    </div>
+                    <div className="time">
+                        {fancyTimeFormat(currentTime)}
+                    </div>
+                    <div className="max-time">
+                        {fancyTimeFormat(currentDuration)}
+                    </div>
+                </div>
+                <div className="action-bar">
+                    <div className="previous-btn" onClick={() => {
+                        setMusicUrl(musicList[rand(0, musicList.length)])
+                        ref.seekTo(0, "seconds")
+                    }}>
+                        <i class="fa-regular fa-angles-left"></i>
+                    </div>
+                    <div className={"play-pause" + (musicPlaying ? " isPlay" : "")} onClick={() => setMusicPlaying(prev => !prev)}>
+                        <i class="fa-duotone fa-play"></i>
+                        <i class="fa-solid fa-pause"></i>
+                    </div>
+                    <div className="next-btn" onClick={() => {
+                        setMusicUrl(musicList[rand(0, musicList.length)])
+                        ref.seekTo(0, "seconds")
+                    }}>
+                        <i class="fa-regular fa-angles-right"></i>
+                    </div>
+                </div>
+                <div className="volume-control">
+                    <div className="title">
+                        VOLUME
+                    </div>
+                    <Slider value={volume * 100} max={100} min={0} onChange={value => setvolume(value / 100)} />
+                </div>
+            </div>
             <div className="menu-container show">
                 <div className="content">
                     <div className="menu">
