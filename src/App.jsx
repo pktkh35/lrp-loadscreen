@@ -112,7 +112,8 @@ const App = () => {
 
         axios.post("https://athens-loadscreen/register", JSON.stringify({
             ...values,
-            dob: moment(values.dob.$d).format("D/MM/YYYY")
+            dob: moment(values.dob.$d).format("D/MM/YYYY"),
+            gender: values.gender === "more" ? values['more-gender'] : values.gender
         }))
     }
 
@@ -159,7 +160,7 @@ const App = () => {
     }
 
     return <>
-        <div className="main-screen">
+        <div className={"main-screen" + (modalShow ? " modalShow" : "") + (menuShow ? " show" : "")}>
             <ReactPlayer
                 ref={refs => setRef(refs)}
                 volume={volume}
@@ -222,7 +223,7 @@ const App = () => {
                     <Slider value={volume * 100} max={100} min={0} onChange={value => setvolume(value / 100)} />
                 </div>
             </div>
-            <div className="menu-container show">
+            <div className={"menu-container" + (!menuShow ? " show" : "")}>
                 <div className="content">
                     <div className="menu">
                         HOME
@@ -236,7 +237,7 @@ const App = () => {
                     <div className="menu">
                         NEW PLAYER
                     </div>
-                    <a className="menu" href="https://bit.ly/3oRA27u" target='_blank' onClick={() => window.invokeNative('openUrl', "https://bit.ly/3oRA27u")}>
+                    <a className="menu" href="https://discord.gg/liferoleplayfivem" target='_blank' onClick={() => window.invokeNative('openUrl', "https://bit.ly/3oRA27u")}>
                         DISCORD
                     </a>
                 </div>
@@ -259,7 +260,7 @@ const App = () => {
             <div className="logo-server" />
             <div className="logo-developer" />
             <Progressbar />
-            <div className={"play-button" + (playShow ? " ready" : "")} onClick={async () => {
+            <div className={"play-button" + (playShow && !menuShow ? " ready" : "")} onClick={async () => {
                 if (!hasIdentity) {
                     setOpacityRegister(0);
                     setMenuShow(true);
@@ -278,7 +279,7 @@ const App = () => {
             </div>
         </div>
 
-        <div className={"menu-ontop" + (menuShow ? " show" : "")}>
+        <div className={"menu-ontop" + (menuShow ? " show" : "") + (modalShow ? " modalShow" : "")}>
             <div className="logo-server" style={{
                 opacity: opacityRegister
             }}></div>
@@ -380,7 +381,7 @@ const App = () => {
                             เพศ
                         </div>
                         <div className="value">
-                            {(formData.gender === "more" ? formData['more-gender'] : formData.gender) || "UNKNOW"}
+                            {(formData.gender === "more" ? formData['more-gender'] : {"male":"ชาย","female":"หญิง"}[formData.gender]) || "UNKNOW"}
                         </div>
                     </div>
                     <div className="card-signature">
