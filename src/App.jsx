@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import ReactPlayer from 'react-player'
 import { Button, ConfigProvider, DatePicker, Form, Input, InputNumber, Radio, Space } from "antd"
 import moment from 'moment/moment'
 import axios from 'axios'
+import { createClient, get } from '@vercel/edge-config';
+import Progressbar from './Progressbar'
 
 const musicList = [
     'https://www.youtube.com/watch?v=MWvRNqJ16Gs',
@@ -33,154 +35,6 @@ const App = () => {
     const [playShow, setPlayShow] = useState(false);
     const [hasIdentity, SethasIdentity] = useState(false);
 
-    useEffect(() => {
-        var types = [
-            // "INIT_CORE",
-            "INIT_BEFORE_MAP_LOADED",
-            "MAP",
-            "INIT_AFTER_MAP_LOADED",
-            "INIT_SESSION"
-        ];
-        var stateCount = 4;
-        var states = {};
-        var progressBars = {
-            "INIT_CORE": {
-                enabled: false, //NOTE: Disabled because INIT_CORE seems to not get called properly. (race condition).
-            },
-
-            "INIT_BEFORE_MAP_LOADED": {
-                enabled: true,
-            },
-
-            "MAP": {
-                enabled: true,
-            },
-
-            "INIT_AFTER_MAP_LOADED": {
-                enabled: true,
-            },
-
-            "INIT_SESSION": {
-                enabled: true,
-            }
-        }
-
-        const handlers = {
-            startInitFunction(data) {
-                //Create a entry for every type.
-                if (states[data.type] == null) {
-                    states[data.type] = {};
-                    states[data.type].count = 0;
-                    states[data.type].done = 0;
-
-                    //NOTE: We increment the stateCount if we do receive the INIT_CORE.
-                    //      Because INIT_CORE is the first type, it will not always be invoked due to a race condidition.
-                    //      See Issue #1 on github.
-                    if (data.type == types[0]) {
-                        stateCount++;
-                    }
-                }
-            },
-
-            startInitFunctionOrder(data) {
-                //Collect the total count for each type.
-                if (states[data.type] != null) {
-                    states[data.type].count += data.count;
-                }
-            },
-
-            initFunctionInvoked(data) {
-                //Increment the done accumulator based on type.
-                if (states[data.type] != null) {
-                    states[data.type].done++;
-                }
-            },
-
-            startDataFileEntries(data) {
-                //Manually add the MAP type.
-                states["MAP"] = {};
-                states["MAP"].count = data.count;
-                states["MAP"].done = 0;
-            },
-
-            performMapLoadFunction(data) {
-                //Increment the map done accumulator.
-                states["MAP"].done++;
-            },
-
-            playerLoaded(data) {
-                setPlayShow(true);
-                SethasIdentity(data.hasIdentity)
-            }
-        };
-
-        window.addEventListener('message', function (e) {
-            (handlers[e.data.eventName] || function () { })(e.data);
-        });
-
-        var progressCache = 0;
-        //Cache to keep track of all progress values.
-        //This is need for the Math.max functions (so no backwards progressbars).
-        function Init() {
-            setInterval(UpdateSingle, 250);
-        }
-
-        function UpdateSingle() {
-            UpdateTotalProgress();
-
-            var progressBar = document.getElementById("progressbar");
-            progressBar.style.width = progressCache + "%";
-
-        }
-
-        //Get the progress of a specific type. (See types array).
-        function GetTypeProgress(type) {
-            if (states[type] != null) {
-                var progress = states[type].done / states[type].count;
-                return Math.round(progress * 100);
-            }
-
-            return 0;
-        }
-
-        //Get the total progress for all the types.
-        function GetTotalProgress() {
-            var totalProgress = 0;
-            var totalStates = 0;
-
-            for (var i = 0; i < types.length; i++) {
-                var key = types[i];
-                if (progressBars[key].enabled) {
-                    totalProgress += GetTypeProgress(key);
-                    totalStates++;
-                }
-            }
-
-            //Dont want to divide by zero because it will return NaN.
-            //Be nice and return a zero for us.
-            if (totalProgress == 0) return 0;
-
-            return totalProgress / totalStates;
-        }
-
-        document.onkeydown = key => {
-            if ([32].includes(key.which)) {
-                setMusicPlaying(prev => !prev);
-            }
-        }
-
-        function UpdateTotalProgress() {
-            //Set the total progress counter:
-            var total = GetTotalProgress();
-            if (progressCache != null) {
-                total = Math.max(total, progressCache);
-            }
-
-            progressCache = total;
-        }
-
-        Init()
-    }, [])
 
     const [modalData, SetModalData] = useState({});
     const [modalShow, setModalShow] = useState(false);
@@ -258,6 +112,21 @@ const App = () => {
         }))
     }
 
+    useEffect(() => {
+        const onMessage = e => {
+            const data = e.data;
+
+            if (data.eventName === "playerLoaded") {
+                setPlayShow(true);
+                SethasIdentity(data.hasIdentity)
+            }
+        }
+
+        window.addEventListener("message", onMessage)
+
+        return () => window.removeEventListener("message", onMessage)
+    })
+
     return <>
         <div className="main-screen">
             <ReactPlayer
@@ -319,10 +188,7 @@ const App = () => {
             />
             <div className="logo-server" />
             <div className="logo-developer" />
-            <div className="progressbar">
-                <div className="bar" id="progressbar"></div>
-            </div>
-
+            <Progressbar />
             <div className={"play-button" + (playShow ? " ready" : "")} onClick={async () => {
                 if (!hasIdentity) {
                     setOpacityRegister(0);

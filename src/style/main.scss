@@ -88,7 +88,7 @@ $error: #cc3b3b;
 
     .menu-container {
         position: absolute;
-        top: 0;
+        top: 1vmin;
         left: 50%;
         translate: -50% 0;
         width: 50vmin;
@@ -113,33 +113,28 @@ $error: #cc3b3b;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 6vmin;
-
-            &::before {
-                content: "";
-                position: absolute;
-                left: 0;
-                top: 0;
-                height: 100%;
-                width: 100%;
-                background-color: lighten($background, 2%);
-                z-index: -1;
-                clip-path: polygon(2.2vmin 0%, calc(100% - 2.2vmin) 0%, 100% 100%, 0% 100%);
-                rotate: 180deg;
-            }
+            padding: 0 3vmin;
+            border-radius: .8vmin;
+            background-color: $background;
+            border: .2vmin solid lighten($background, 20%);
 
             .header {
                 position: relative;
                 color: white;
-                height: 6vmin;
+                width: 8vmin;
+                height: 100%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 z-index: 999;
                 transition: 1s;
+                background-color: $background;
+                border: .2vmin solid lighten($background, 30%);
+                border-left: 0;
+                border-right: 0;
 
                 img {
-                    height: 60%;
+                    height: 90%;
                     user-select: none;
                 }
             }
