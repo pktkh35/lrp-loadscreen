@@ -367,6 +367,7 @@ html {
             cursor: pointer;
             background-color: $main;
             color: $background;
+            visibility: visible;
         }
 
         &:not(.ready) {
@@ -374,6 +375,7 @@ html {
             color: white;
             scale: 0.9;
             opacity: 0;
+            visibility: hidden;
         }
     }
 }
